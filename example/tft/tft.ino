@@ -12,7 +12,7 @@
 #define LCD_MODULE_CMD_1
 
 TFT_eSPI tft = TFT_eSPI();
-#define WAIT 1000
+#define WAIT 5000
 unsigned long targetTime = 0; // Used for testing draw times
 
 #if defined(LCD_MODULE_CMD_1)
@@ -88,10 +88,22 @@ void loop()
     tft.fillScreen(TFT_BLACK);
     tft.setTextColor(TFT_GREEN, TFT_BLACK);
 
+// Font 6 row = 20 units
+    tft.setTextColor(TFT_YELLOW, TFT_BLACK); //Yellow numbers
+    tft.drawString("12", 0, 0, 7);
+
+    tft.setTextSize(1);
+    tft.setTextColor(TFT_BLUE, TFT_BLACK); //Blue numbers
+    tft.drawString("Volts", 90, 10, 4);
+    delay(WAIT);
+    delay(WAIT);
+    tft.setTextSize(1);
+
+
     tft.drawString(" !\"#$%&'()*+,-./0123456", 0, 0, 2);
     tft.drawString("789:;<=>?@ABCDEFGHIJKL", 0, 16, 2);
     tft.drawString("MNOPQRSTUVWXYZ[\\]^_`", 0, 32, 2);
-    tft.drawString("abcdefghijklmnopqrstuvw", 0, 48, 2);
+    tft.drawString("This is Font #2", 0, 48, 2);
     int xpos = 0;
     xpos += tft.drawString("xyz{|}~", 0, 64, 2);
     tft.drawChar(127, xpos, 64, 2);
@@ -104,13 +116,13 @@ void loop()
     tft.drawString("/0123456789:;", 0, 26, 4);
     tft.drawString("<=>?@ABCDE", 0, 52, 4);
     tft.drawString("FGHIJKLMNO", 0, 78, 4);
-    tft.drawString("PQRSTUVWX", 0, 104, 4);
+    tft.drawString("Font 4", 0, 104, 4);
     delay(WAIT);
 
     tft.fillScreen(TFT_BLACK);
     tft.drawString("YZ[\\]^_`abc", 0, 0, 4);
     tft.drawString("defghijklmno", 0, 26, 4);
-    tft.drawString("pqrstuvwxyz", 0, 52, 4);
+    tft.drawString("Font 4", 0, 52, 4);
     xpos = 0;
     xpos += tft.drawString("{|}~", 0, 78, 4);
     tft.drawChar(127, xpos, 78, 4);
@@ -121,19 +133,19 @@ void loop()
 
     tft.drawString("012345", 0, 0, 6);
     tft.drawString("6789", 0, 40, 6);
-    tft.drawString("apm-:.", 0, 80, 6);
+    tft.drawString("Fo 6-:.", 0, 80, 6);
     delay(WAIT);
 
     tft.fillScreen(TFT_BLACK);
     tft.setTextColor(TFT_RED, TFT_BLACK);
 
     tft.drawString("0123", 0, 0, 7);
-    tft.drawString("4567", 0, 60, 7);
+    tft.drawString("Fo 7", 0, 60, 7);
     delay(WAIT);
 
     tft.fillScreen(TFT_BLACK);
     tft.drawString("890:.", 0, 0, 7);
-    tft.drawString("", 0, 60, 7);
+    tft.drawString("Fo 7", 0, 60, 7);
     delay(WAIT);
 
     tft.fillScreen(TFT_BLACK);
@@ -171,7 +183,7 @@ void loop()
     tft.drawString(" !\"#$%&'()*+,-./0123456", 0, 0, 2);
     tft.drawString("789:;<=>?@ABCDEFGHIJKL", 0, 16, 2);
     tft.drawString("MNOPQRSTUVWXYZ[\\]^_`", 0, 32, 2);
-    tft.drawString("abcdefghijklmnopqrstuvw", 0, 48, 2);
+    tft.drawString("Font 2", 0, 48, 2);
     xpos = 0;
     xpos += tft.drawString("xyz{|}~", 0, 64, 2);
     tft.drawChar(127, xpos, 64, 2);
@@ -184,13 +196,13 @@ void loop()
     tft.drawString("/0123456789:;", 0, 26, 4);
     tft.drawString("<=>?@ABCDE", 0, 52, 4);
     tft.drawString("FGHIJKLMNO", 0, 78, 4);
-    tft.drawString("PQRSTUVWX", 0, 104, 4);
+    tft.drawString("Font 4", 0, 104, 4);
 
     delay(WAIT);
     tft.fillScreen(TFT_BROWN);
     tft.drawString("YZ[\\]^_`abc", 0, 0, 4);
     tft.drawString("defghijklmno", 0, 26, 4);
-    tft.drawString("pqrstuvwxyz", 0, 52, 4);
+    tft.drawString("Font 4", 0, 52, 4);
     xpos = 0;
     xpos += tft.drawString("{|}~", 0, 78, 4);
     tft.drawChar(127, xpos, 78, 4);
@@ -201,14 +213,14 @@ void loop()
 
     tft.drawString("012345", 0, 0, 6);
     tft.drawString("6789", 0, 40, 6);
-    tft.drawString("apm-:.", 0, 80, 6);
+    tft.drawString("F6 m-:.", 0, 80, 6);
     delay(WAIT);
 
     tft.fillScreen(TFT_BROWN);
     tft.setTextColor(TFT_RED);
 
     tft.drawString("0123", 0, 0, 7);
-    tft.drawString("4567", 0, 60, 7);
+    tft.drawString("F 7", 0, 60, 7);
     delay(WAIT);
 
     tft.fillScreen(TFT_BROWN);
