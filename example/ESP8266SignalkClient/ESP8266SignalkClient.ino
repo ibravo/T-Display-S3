@@ -180,6 +180,7 @@ void loop() {
   if (CellVolt <= 10){
     String CellVoltText = String((CellVolt));}
   String CellVoltTextRaw = String(int(CellVoltRaw));
+  
 
   // Display Values
   // First we test them with a background colour set
