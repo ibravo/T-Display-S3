@@ -38,8 +38,8 @@ void deviceScan(TwoWire *_port, Stream *stream)
         stream->println("Done\n");
 }
 
-int sda = 18;
-int scl = 17;
+int sda = 44;
+int scl = 43;
 #define PIN_POWER_ON 15
 
 void setup()
