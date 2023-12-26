@@ -12,6 +12,21 @@
 #include "TFT_eSPI.h"    // Please use the TFT library provided in the library. */
 #include "pin_config.h"  // Defines PINs by function
 
+#include "SDL_Arduino_INA3221.h"  // For the Shunt Power
+#include <Wire.h>
+
+// INA3221 Variables
+SDL_Arduino_INA3221 ina3221;
+// the three channels of the INA3221 named for SunAirPlus Solar Power Controller channels (www.switchdoc.com)
+#define INA3221_CHANNEL1 1
+#define INA3221_CHANNEL2 2
+#define INA3221_CHANNEL3 3
+
+//Define I2C ports
+int sda = 44;
+int scl = 43;
+
+
 
 // User configuration starts here
 //SignalK and Wifi
@@ -103,10 +118,13 @@ void setup() {
 // End of Unknown Screen commands
 
 
-// Connect to Serial
+// Connect to Serial, I2C and Wifi
   Serial.begin(115200);
+  Wire.begin(sda, scl);
   startWifi();
 //  udp.begin(33333); //Local UPD Port to use to send FROM
+  ina3221.begin();  // Enable INA3221 Current Circuit
+
 }
 
 
@@ -149,7 +167,7 @@ void Print_Wifi_Status() {
   };
 };
 
-
+// Sends data to SignalK Server
 void signalkSendValue (String path, String value, String units) {
   String message = "{\"updates\":[{\"$source\": \""+ signalkSource + "\", \"values\":[{\"path\":\"" + path + "\",\"value\":" + value + "}]}]}";
 
@@ -169,13 +187,62 @@ void signalkSendValue (String path, String value, String units) {
 void loop() {
   //TO DO
 
+
   //float CellVolt = float(analogRead(A0))/30 ;
   double CellVoltRaw = analogRead(A0) ;
   double CellVolt = CellVoltRaw * 16.5 / 4095;
   //CellVolt = analogRead(A0);
+
+  // Values from SHUNT
+  String shunt_title= String("Bus V") + " " + String("Shunt mV") + " " + String("Load V") + "  " + String("Current mA") ;
+
+  // INA3221 Channel 1
+  float shuntvoltage1 = 0;
+  float busvoltage1 = 0;
+  float current_mA1 = 0;
+  float loadvoltage1 = 0;
+
+  busvoltage1 = ina3221.getBusVoltage_V(INA3221_CHANNEL1);
+  shuntvoltage1 = ina3221.getShuntVoltage_mV(INA3221_CHANNEL1);
+  current_mA1 = -ina3221.getCurrent_mA(INA3221_CHANNEL1);  // minus is to get the "sense" right.   - means the battery is charging, + that it is discharging
+  loadvoltage1 = busvoltage1 + (shuntvoltage1 / 1000);
   
+  String shunt_output1= String(busvoltage1) + "V " + String(shuntvoltage1) + " mV " + String(loadvoltage1) + "V " + String(current_mA1) + " mA " ;
+  Serial.print(shunt_output1);
+  // INA3221 Channel 2
+  float shuntvoltage2 = 0;
+  float busvoltage2 = 0;
+  float current_mA2 = 0;
+  float loadvoltage2 = 0;
+
+  busvoltage2 = ina3221.getBusVoltage_V(INA3221_CHANNEL2);
+  shuntvoltage2 = ina3221.getShuntVoltage_mV(INA3221_CHANNEL2);
+  current_mA2 = -ina3221.getCurrent_mA(INA3221_CHANNEL2);  // minus is to get the "sense" right.   - means the battery is charging, + that it is discharging
+  loadvoltage2 = busvoltage2 + (shuntvoltage2 / 1000);
+  
+  String shunt_output2= String(busvoltage2) + "V " + String(shuntvoltage2) + " mV " + String(loadvoltage2) + "V " + String(current_mA2) + " mA " ;
+  Serial.print(shunt_output2);
+  // INA3221 Channel 3
+  float shuntvoltage3 = 0;
+  float busvoltage3 = 0;
+  float current_mA3 = 0;
+  float loadvoltage3 = 0;
+
+  busvoltage3 = ina3221.getBusVoltage_V(INA3221_CHANNEL3);
+  shuntvoltage3 = ina3221.getShuntVoltage_mV(INA3221_CHANNEL3);
+  current_mA3 = -ina3221.getCurrent_mA(INA3221_CHANNEL3);  // minus is to get the "sense" right.   - means the battery is charging, + that it is discharging
+  loadvoltage3 = busvoltage3 + (shuntvoltage3 / 1000);
+  
+  String shunt_output3= String(busvoltage3) + "V " + String(shuntvoltage3) + " mV " + String(loadvoltage3) + "V " + String(current_mA3) + " mA " ;
+  Serial.print(shunt_output3);
+  
+
+
+// Send values to SignalK Server
   signalkSendValue("cell.voltage", String(CellVolt), "V");
 
+
+  //Formats Voltage so that it always reads in as two int values
   String CellVoltText = "0" + String((CellVolt));
   if (CellVolt <= 10){
     String CellVoltText = String((CellVolt));}
@@ -184,20 +251,27 @@ void loop() {
 
   // Display Values
   // First we test them with a background colour set
-  tft.setTextSize(1);
   tft.fillScreen(TFT_BLACK);
 
   // Font 6 row = 20 units
+  tft.setTextSize(1);
   tft.setTextColor(TFT_RED, TFT_BLACK); //Red numbers
   tft.drawString(CellVoltText, 0, 0, 6);
-  tft.drawString(CellVoltTextRaw, 0, 50, 4);
+  tft.drawString(CellVoltTextRaw, 180, 20, 4);
+  tft.setTextColor(TFT_BLUE, TFT_BLACK); //Green numbers
+  tft.drawString(shunt_title, 0, 70, 4);
+  tft.setTextColor(TFT_GREEN, TFT_BLACK); //Green numbers
+  tft.drawString(shunt_output1, 0, 90, 4);
+  tft.drawString(shunt_output2, 0, 110, 4);
+  tft.drawString(shunt_output3, 0, 130, 4);
 
   tft.setTextSize(1);
   tft.setTextColor(TFT_BLUE, TFT_BLACK); //Blue numbers
   tft.drawString("V", 130, 20, 4);
+  tft.drawString("Raw", 250, 20, 4);
   tft.setTextSize(1);
 
-  Print_Wifi_Status();
+  Print_Wifi_Status();              // Prints asterisk on Top Right
 
 
   // Perform these checks every 10 seconds
