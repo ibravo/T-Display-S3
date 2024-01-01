@@ -21,6 +21,9 @@ SDL_Arduino_INA3221 ina3221;
 #define INA3221_CHANNEL1 1
 #define INA3221_CHANNEL2 2
 #define INA3221_CHANNEL3 3
+const float Rshunt1 = 0.00025 ; // 0.075v/300A = 0.00025
+const float Rshunt2 = 0.00025 ; // 0.075v/300A = 0.00025
+const float Rshunt3 = 0.00025 ; // 0.075v/300A = 0.00025
 
 //Define I2C ports
 int sda = 44;
@@ -137,7 +140,7 @@ void startWifi() {
   tft.drawString("Connecting to Wifi:", 0, 0, 4);   //Display info about Wifi network
   tft.drawString(wifiSsid, 10, 30, 4);
 */
-  Serial.print("\nConnecting to Wifi");
+  Serial.println("\nConnecting to Wifi...");
 
   //Connect with Wifi
   WiFi.mode(WIFI_STA);   //Client (Station) Mode
@@ -175,11 +178,22 @@ void signalkSendValue (String path, String value, String units) {
     message = "{\"updates\":[{\"meta\":[{\"path\":\"" + path + "\",\"value\":{\"units\":\"" + units + "\"}}]}]}";
     SK_MetaCounter = 100;
   }
-  Serial.println(message);
 
+
+  // Checks WiFi status and reconnects if not up
+  if (WiFi.status() != WL_CONNECTED) {
+    //Wifi is not connected.
+  Serial.println("\n ==// Not connected to WiFi //==");
+  Serial.println(" ");
+
+  } else {
+    //Wifi Connected, send packets
   udp.beginPacket(signalkIp, signalkUdpPort);
   udp.print(message);
   udp.endPacket();  
+  Serial.println(message);
+  }
+
 }
 
   
@@ -188,98 +202,158 @@ void loop() {
   //TO DO
 
 
-  //float CellVolt = float(analogRead(A0))/30 ;
-  double CellVoltRaw = analogRead(A0) ;
-  double CellVolt = CellVoltRaw * 16.5 / 4095;
-  //CellVolt = analogRead(A0);
-
-  // Values from SHUNT
-  String shunt_title= String("Bus V") + " " + String("Shunt mV") + " " + String("Load V") + "  " + String("Current mA") ;
-
   // INA3221 Channel 1
   float shuntvoltage1 = 0;
   float busvoltage1 = 0;
   float current_mA1 = 0;
-  float loadvoltage1 = 0;
 
-  busvoltage1 = ina3221.getBusVoltage_V(INA3221_CHANNEL1);
+  busvoltage1 = ina3221.getBusVoltage_V(INA3221_CHANNEL1); //(0.00025=75mV/300A, 0.1 Ohm default shunt in code)
   shuntvoltage1 = ina3221.getShuntVoltage_mV(INA3221_CHANNEL1);
-  current_mA1 = -ina3221.getCurrent_mA(INA3221_CHANNEL1);  // minus is to get the "sense" right.   - means the battery is charging, + that it is discharging
-  loadvoltage1 = busvoltage1 + (shuntvoltage1 / 1000);
-  
-  String shunt_output1= String(busvoltage1) + "V " + String(shuntvoltage1) + " mV " + String(loadvoltage1) + "V " + String(current_mA1) + " mA " ;
-  Serial.print(shunt_output1);
+  //current_mA1 = busvoltage1/Rshunt1;
+  current_mA1 = (shuntvoltage1 * 400/100 )- 1.12; //400=75/300, Less Constant to get to zero
+
+  String shunt_output1= "BusVolt: " + String(busvoltage1) + "V " + "CurAmp: " + String(current_mA1) + " A " ;
+  Serial.println(shunt_output1);
+
   // INA3221 Channel 2
   float shuntvoltage2 = 0;
   float busvoltage2 = 0;
   float current_mA2 = 0;
-  float loadvoltage2 = 0;
 
   busvoltage2 = ina3221.getBusVoltage_V(INA3221_CHANNEL2);
   shuntvoltage2 = ina3221.getShuntVoltage_mV(INA3221_CHANNEL2);
-  current_mA2 = -ina3221.getCurrent_mA(INA3221_CHANNEL2);  // minus is to get the "sense" right.   - means the battery is charging, + that it is discharging
-  loadvoltage2 = busvoltage2 + (shuntvoltage2 / 1000);
+  //current_mA2 = busvoltage2/Rshunt2;
+  current_mA2 = (shuntvoltage2 * 400/100 )- 1.12; //400=75/300, Less Constant to get to zero
+
+  String shunt_output2= "BusVolt: " + String(busvoltage2) + "V " + "CurAmp: " + String(current_mA2) + " A " ;
+  Serial.println(shunt_output2);
+
   
-  String shunt_output2= String(busvoltage2) + "V " + String(shuntvoltage2) + " mV " + String(loadvoltage2) + "V " + String(current_mA2) + " mA " ;
-  Serial.print(shunt_output2);
   // INA3221 Channel 3
   float shuntvoltage3 = 0;
   float busvoltage3 = 0;
   float current_mA3 = 0;
-  float loadvoltage3 = 0;
-
+  
   busvoltage3 = ina3221.getBusVoltage_V(INA3221_CHANNEL3);
   shuntvoltage3 = ina3221.getShuntVoltage_mV(INA3221_CHANNEL3);
-  current_mA3 = -ina3221.getCurrent_mA(INA3221_CHANNEL3);  // minus is to get the "sense" right.   - means the battery is charging, + that it is discharging
-  loadvoltage3 = busvoltage3 + (shuntvoltage3 / 1000);
+  //current_mA3 = busvoltage3/Rshunt3;
+  current_mA3 = (shuntvoltage3 * 400/100 )- 1.12; //400=75/300, Less Constant to get to zero
   
-  String shunt_output3= String(busvoltage3) + "V " + String(shuntvoltage3) + " mV " + String(loadvoltage3) + "V " + String(current_mA3) + " mA " ;
-  Serial.print(shunt_output3);
-  
+  String shunt_output3= "BusVolt: " + String(busvoltage3) + "V " + "CurAmp: " + String(current_mA3) + " A " ;
+  Serial.println(shunt_output3);
+ 
+  //Define Battery Variables for testing
+  float batt1_v = 13.95;
+  float batt2_v = 12.04;
+  float batt3_v = 12.96;
 
+  float batt1_c = 3.58;
+  float batt2_c = 5.33;
+  float batt3_c = 4.47;
+  
+  int batt1_pct = 29;
+  int batt2_pct = 101;
+  int batt3_pct = 59;
 
 // Send values to SignalK Server
-  signalkSendValue("cell.voltage", String(CellVolt), "V");
-
-
-  //Formats Voltage so that it always reads in as two int values
-  String CellVoltText = "0" + String((CellVolt));
-  if (CellVolt <= 10){
-    String CellVoltText = String((CellVolt));}
-  String CellVoltTextRaw = String(int(CellVoltRaw));
-  
+  //Battery3 Voltage
+  signalkSendValue("cell.voltage", String(batt3_v), "V");
+ 
 
   // Display Values
   // First we test them with a background colour set
   tft.fillScreen(TFT_BLACK);
 
-  // Font 6 row = 20 units
+  // Print Battery Screen
+  // Battery Titles
   tft.setTextSize(1);
-  tft.setTextColor(TFT_RED, TFT_BLACK); //Red numbers
-  tft.drawString(CellVoltText, 0, 0, 6);
-  tft.drawString(CellVoltTextRaw, 180, 20, 4);
-  tft.setTextColor(TFT_BLUE, TFT_BLACK); //Green numbers
-  tft.drawString(shunt_title, 0, 70, 4);
-  tft.setTextColor(TFT_GREEN, TFT_BLACK); //Green numbers
-  tft.drawString(shunt_output1, 0, 90, 4);
-  tft.drawString(shunt_output2, 0, 110, 4);
-  tft.drawString(shunt_output3, 0, 130, 4);
+  tft.setTextColor(TFT_GREEN, TFT_BLACK);
+  tft.drawString("Volts", 10, 0, 4);
+  tft.drawString("Amps", 100, 0, 4);
+  tft.drawString("Battery", 200, 0, 4);
 
-  tft.setTextSize(1);
-  tft.setTextColor(TFT_BLUE, TFT_BLACK); //Blue numbers
-  tft.drawString("V", 130, 20, 4);
-  tft.drawString("Raw", 250, 20, 4);
-  tft.setTextSize(1);
 
+  // Battery 1 to 3 Volts and Amps
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  tft.drawString((String) batt1_v, 0, 40, 4);
+  tft.drawString((String) batt1_c, 110, 40, 4);
+  tft.drawString((String) batt2_v, 0, 90, 4);
+  tft.drawString((String) batt2_c, 110, 90, 4);
+  tft.drawString((String) batt3_v, 0, 140, 4);
+  tft.drawString((String) batt3_c, 110, 140, 4);
+
+  //battery 1 Charge Percentage
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  if(batt1_pct < 30) {
+    tft.setTextColor(TFT_RED, TFT_BLACK);
+    tft.drawString((String) batt1_pct, 230, 30, 6);
+  }
+  else if(batt1_pct < 60) {
+    tft.setTextColor(TFT_YELLOW, TFT_BLACK);
+    tft.drawString((String) batt1_pct, 230, 30, 6);
+  }
+  else if(batt1_pct < 100) {
+    tft.drawString((String) batt1_pct, 230, 30, 6);
+  }
+  else {
+    tft.drawString((String) batt1_pct, 200, 30, 6);
+  }
+
+
+  //battery 2 Charge Percentage
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  if(batt2_pct < 30) {
+    tft.setTextColor(TFT_RED, TFT_BLACK);
+    tft.drawString((String) batt2_pct, 230, 80, 6);
+  }
+  else if(batt2_pct < 60) {
+    tft.setTextColor(TFT_YELLOW, TFT_BLACK);
+    tft.drawString((String) batt2_pct, 230, 80, 6);
+  }
+  else if(batt2_pct < 100) {
+    tft.drawString((String) batt2_pct, 230, 80, 6);
+  }
+  else {
+    tft.drawString((String) batt2_pct, 200, 80, 6);
+  }
+
+
+  //battery 3 Charge Percentage
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  if(batt3_pct < 30) {
+    tft.setTextColor(TFT_RED, TFT_BLACK);
+    tft.drawString((String) batt3_pct, 230, 130, 6);
+  }
+  else if(batt3_pct < 60) {
+    tft.setTextColor(TFT_YELLOW, TFT_BLACK);
+    tft.drawString((String) batt3_pct, 230, 130, 6);
+  }
+  else if(batt3_pct < 100) {
+    tft.drawString((String) batt3_pct, 230, 130, 6);
+  }
+  else {
+    tft.drawString((String) batt3_pct, 200, 130, 6);
+  }
+
+
+  // Horizontal Dividers
+  tft.drawLine(0, 25, 300, 25, TFT_LIGHTGREY);
+  tft.drawLine(0, 75, 300, 75, TFT_LIGHTGREY);
+  tft.drawLine(0, 125, 300, 125, TFT_LIGHTGREY);
+
+
+
+  // Print Wifi Connection Status
   Print_Wifi_Status();              // Prints asterisk on Top Right
 
 
-  // Perform these checks every 10 seconds
-  if (millis() - WifiTime >= 10000) {
+
+  // Perform these checks every 20 seconds
+  if (millis() - WifiTime >= 20000) {
     // Checks WiFi status and reconnects if not up
     if (WiFi.status() != WL_CONNECTED) {
       //Wifi is not connected. Reconnect
-      //startWifi();
+      startWifi();
     }
     // Other tests every 10 seconds
     //
@@ -287,7 +361,6 @@ void loop() {
   //Reset WifiTime clock back to zero
   WifiTime = millis();
   }
-
 
   delay(2000);
 }

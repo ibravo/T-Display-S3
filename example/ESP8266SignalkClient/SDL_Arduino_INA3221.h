@@ -71,7 +71,9 @@
     #define INA3221_REG_BUSVOLTAGE_1                  (0x02)
 /*=========================================================================*/
 
-#define SHUNT_RESISTOR_VALUE  (0.1)   // default shunt resistor value of 0.1 Ohm
+// 75mV / 300A = 0.25 mOhm = 0.00025 Ohm
+#define SHUNT_RESISTOR_VALUE  (0.01)   // default shunt resistor value of 0.1 Ohm = 0.1
+
 
 class SDL_Arduino_INA3221{
  public:
