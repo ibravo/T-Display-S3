@@ -1,7 +1,7 @@
 /**
-   ESP8266SignalkClient.ino
-    Marco Bergman
-    Created on: 24-NOV-2023
+   NMEA2k.ino
+    Ignacio Bravo
+    Created on: 12-JUN-2024
 
 */
 
@@ -12,32 +12,20 @@
 #include "TFT_eSPI.h"    // Please use the TFT library provided in the library. */
 #include "pin_config.h"  // Defines PINs by function
 
-#include "SDL_Arduino_INA3221.h"  // For the Shunt Power
 #include <Wire.h>
-
-// INA3221 Variables
-SDL_Arduino_INA3221 ina3221;
-// the three channels of the INA3221 named for SunAirPlus Solar Power Controller channels (www.switchdoc.com)
-#define INA3221_CHANNEL1 1
-#define INA3221_CHANNEL2 2
-#define INA3221_CHANNEL3 3
-const float Rshunt1 = 0.00025 ; // 0.075v/300A = 0.00025
-const float Rshunt2 = 0.00025 ; // 0.075v/300A = 0.00025
-const float Rshunt3 = 0.00025 ; // 0.075v/300A = 0.00025
 
 //Define I2C ports
 int sda = 44;
 int scl = 43;
 
 
-
 // User configuration starts here
 //SignalK and Wifi
-String wifiSsid        =  "baaja";       //baaja
-String wifiPassword    =  "argentina";   //argentina
+String wifiSsid        =  "Tango5";       //baaja
+String wifiPassword    =  "du1cede1eche";   //argentina
 String signalkIpString =  "10.10.10.1";
 int    signalkUdpPort  =  30330;
-String signalkSource   =  "LILYGO-S3";
+String signalkSource   =  "HELM";
 // User configuration ends here
 
 
@@ -126,7 +114,6 @@ void setup() {
   Wire.begin(sda, scl);
   startWifi();
 //  udp.begin(33333); //Local UPD Port to use to send FROM
-  ina3221.begin();  // Enable INA3221 Current Circuit
 
 }
 
@@ -203,47 +190,6 @@ void signalkSendValue (String path, String value, String units) {
 
 void loop() {
   //TO DO
-
-
-  // INA3221 Channel 1
-  float shuntvoltage1 = 0;
-  float busvoltage1 = 0;
-  float current_mA1 = 0;
-
-  busvoltage1 = ina3221.getBusVoltage_V(INA3221_CHANNEL1); //(0.00025=75mV/300A, 0.1 Ohm default shunt in code)
-  shuntvoltage1 = ina3221.getShuntVoltage_mV(INA3221_CHANNEL1);
-  //current_mA1 = busvoltage1/Rshunt1;
-  current_mA1 = (shuntvoltage1 * 400/100 )- 1.12; //400=75/300, Less Constant to get to zero
-
-  String shunt_output1= "BusVolt: " + String(busvoltage1) + "V " + "CurAmp: " + String(current_mA1) + " A " ;
-  Serial.println(shunt_output1);
-
-  // INA3221 Channel 2
-  float shuntvoltage2 = 0;
-  float busvoltage2 = 0;
-  float current_mA2 = 0;
-
-  busvoltage2 = ina3221.getBusVoltage_V(INA3221_CHANNEL2);
-  shuntvoltage2 = ina3221.getShuntVoltage_mV(INA3221_CHANNEL2);
-  //current_mA2 = busvoltage2/Rshunt2;
-  current_mA2 = (shuntvoltage2 * 400/100 )- 1.12; //400=75/300, Less Constant to get to zero
-
-  String shunt_output2= "BusVolt: " + String(busvoltage2) + "V " + "CurAmp: " + String(current_mA2) + " A " ;
-  Serial.println(shunt_output2);
-
-  
-  // INA3221 Channel 3
-  float shuntvoltage3 = 0;
-  float busvoltage3 = 0;
-  float current_mA3 = 0;
-  
-  busvoltage3 = ina3221.getBusVoltage_V(INA3221_CHANNEL3);
-  shuntvoltage3 = ina3221.getShuntVoltage_mV(INA3221_CHANNEL3);
-  //current_mA3 = busvoltage3/Rshunt3;
-  current_mA3 = (shuntvoltage3 * 400/100 )- 1.12; //400=75/300, Less Constant to get to zero
-  
-  String shunt_output3= "BusVolt: " + String(busvoltage3) + "V " + "CurAmp: " + String(current_mA3) + " A " ;
-  Serial.println(shunt_output3);
  
   //Define Battery Variables for testing
   float batt1_v = 13.95;
@@ -271,6 +217,7 @@ void loop() {
   // Battery Titles
   tft.setTextSize(1);
   tft.setTextColor(TFT_GREEN, TFT_BLACK);
+
   tft.drawString("Volts", 10, 0, 4);
   tft.drawString("Amps", 100, 0, 4);
   tft.drawString("Battery", 200, 0, 4);
@@ -285,58 +232,6 @@ void loop() {
   tft.drawString((String) batt3_v, 0, 140, 4);
   tft.drawString((String) batt3_c, 110, 140, 4);
 
-  //battery 1 Charge Percentage
-  tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  if(batt1_pct < 30) {
-    tft.setTextColor(TFT_RED, TFT_BLACK);
-    tft.drawString((String) batt1_pct, 230, 30, 6);
-  }
-  else if(batt1_pct < 60) {
-    tft.setTextColor(TFT_YELLOW, TFT_BLACK);
-    tft.drawString((String) batt1_pct, 230, 30, 6);
-  }
-  else if(batt1_pct < 100) {
-    tft.drawString((String) batt1_pct, 230, 30, 6);
-  }
-  else {
-    tft.drawString((String) batt1_pct, 200, 30, 6);
-  }
-
-
-  //battery 2 Charge Percentage
-  tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  if(batt2_pct < 30) {
-    tft.setTextColor(TFT_RED, TFT_BLACK);
-    tft.drawString((String) batt2_pct, 230, 80, 6);
-  }
-  else if(batt2_pct < 60) {
-    tft.setTextColor(TFT_YELLOW, TFT_BLACK);
-    tft.drawString((String) batt2_pct, 230, 80, 6);
-  }
-  else if(batt2_pct < 100) {
-    tft.drawString((String) batt2_pct, 230, 80, 6);
-  }
-  else {
-    tft.drawString((String) batt2_pct, 200, 80, 6);
-  }
-
-
-  //battery 3 Charge Percentage
-  tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  if(batt3_pct < 30) {
-    tft.setTextColor(TFT_RED, TFT_BLACK);
-    tft.drawString((String) batt3_pct, 230, 130, 6);
-  }
-  else if(batt3_pct < 60) {
-    tft.setTextColor(TFT_YELLOW, TFT_BLACK);
-    tft.drawString((String) batt3_pct, 230, 130, 6);
-  }
-  else if(batt3_pct < 100) {
-    tft.drawString((String) batt3_pct, 230, 130, 6);
-  }
-  else {
-    tft.drawString((String) batt3_pct, 200, 130, 6);
-  }
 
 
   // Horizontal Dividers
